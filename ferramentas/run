@@ -13,11 +13,13 @@ if [ -d cd_root ]; then
 fi
 
 mkdir cd_root
-mkdir -p cd_root/{shm,videos,sfx,bg,sng}
+mkdir -p cd_root/{shm,videos,sfx,bg,sng,perguntas}
 chmod +x ferramentas/converte_imagem.sh
 
 if [ ! -f showdomilhaovol3.zip ]; then
+        echo ""
 	echo ** FALTA SHOWDOMILHAOVOL3.ZIP **
+        echo ""
 	exit 1
 fi
 unzip showdomilhaovol3.zip -d $BASE_JOGO
@@ -71,6 +73,10 @@ ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda2.jpg cd_root/shm/spr_ajuda2.
 ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda3.jpg cd_root/shm/spr_ajuda3.png 64x64!
 ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda4.jpg cd_root/shm/spr_ajuda4.png 64x64!
 ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda5.jpg cd_root/shm/spr_ajuda5.png 64x64!
+# Converte fundo e coloca letras para tela de digitar nome
+ferramentas/converte_imagem.sh $BASE_JOGO/img/fundo_pl.jpg /tmp/fundo_pl.jpg 512x512!
+convert /tmp/fundo_pl.jpg extras/letras.jpg -geometry +117x177 -composite cd_root/bg/bg_digite_nome4.jpg
+
 # Converte ouroX.jpg, mas esse e'um hack: cola ele na image de fundo, converte para a resolucao certa, entao recorta e salva
 for ouro in {1..16}; do
  convert $BASE_JOGO/img/telajogo.jpg $BASE_JOGO/img/ouro$ouro.jpg -geometry +347+0 -composite /tmp/temp1.jpg
@@ -108,7 +114,7 @@ ferramentas/converte_imagem.sh $BASE_JOGO/img/regra_3.jpg cd_root/bg/bg_regra_3.
 ferramentas/converte_imagem.sh $BASE_JOGO/img/telassun.jpg cd_root/bg/bg_telassun.jpg 512x512!
 ferramentas/converte_imagem.sh $BASE_JOGO/img/tl_placa.jpg cd_root/bg/bg_tl_placa.jpg 512x512!
 ferramentas/converte_imagem.sh $BASE_JOGO/img/tl_valor.jpg cd_root/bg/bg_tl_valor.jpg 512x512!
-ls $BASE_JOGO/img/p[1-9]*.jpg | while read file; do ferramentas/converte_imagem.sh $file cd_root/bg/bg_$(basename $file) 512x512! ; done
+ls $BASE_JOGO/img/p[0-9]*.jpg | while read file; do ferramentas/converte_imagem.sh $file cd_root/bg/bg_$(basename $file) 512x512! ; done
 
 # Sons
 ffmpeg -hide_banner -y -i $BASE_JOGO/audios/correta.wav -ac 1 -c:a pcm_s16le /tmp/correta.wav
@@ -180,6 +186,6 @@ python3 ferramentas/limpar.py perguntas/QUESTOES_7.csv portugues
 
 for topico in todas portugues matematica ingles historia geografia ciencias; do
   for tipo in a b c d; do
-	./converter ${topico}_${tipo}.txt romdisk_boot/${topico}_${tipo}.dat
+	./converter ${topico}_${tipo}.txt cd_root/perguntas/${topico}_${tipo}.dat
   done
 done
