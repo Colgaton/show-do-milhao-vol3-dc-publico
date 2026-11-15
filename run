@@ -11,7 +11,7 @@ fi
 mkdir cd_root
 mkdir -p cd_root/{shm,videos,sfx,bg,sng}
 chmod +x ferramentas/converte_imagem.sh
-#unzip Archive.zip -d $BASE_JOGO
+unzip showdomilhaovol3.zip -d $BASE_JOGO
 
 # Converte os arquivos para lowercase
 cd $BASE_JOGO/img
@@ -20,14 +20,12 @@ for f in *; do
     lower=$(printf '%s' "$f" | tr '[:upper:]' '[:lower:]')
     [ "$f" = "$lower" ] || mv -- "$f" "$lower"
 done
-cd -
 cd $BASE_JOGO/audios
 for f in *; do
     [ -f "$f" ] || continue
     lower=$(printf '%s' "$f" | tr '[:upper:]' '[:lower:]')
     [ "$f" = "$lower" ] || mv -- "$f" "$lower"
 done
-cd -
 cd $BASE_JOGO/videos
 for f in *; do
     [ -f "$f" ] || continue
@@ -163,13 +161,13 @@ ffmpeg -hide_banner -y -hide_banner -loglevel error -y -i $BASE_JOGO/videos/ence
 mkdir ocx perguntas
 cp $BASE_JOGO/*movies*.ocx ocx/
 python3 quiz_text_hunt.py ocx --out perguntas
-python3 limpar.py perguntas/QUESTOES.csv todas
-python3 limpar.py perguntas/QUESTOES_1.csv historia
-python3 limpar.py perguntas/QUESTOES_3.csv matematica
-python3 limpar.py perguntas/QUESTOES_4.csv ingles
-python3 limpar.py perguntas/QUESTOES_5.csv ciencias
-python3 limpar.py perguntas/QUESTOES_6.csv geografia
-python3 limpar.py perguntas/QUESTOES_7.csv portugues
+python3 ferramentas/limpar.py perguntas/QUESTOES.csv todas
+python3 ferramentas/limpar.py perguntas/QUESTOES_1.csv historia
+python3 ferramentas/limpar.py perguntas/QUESTOES_3.csv matematica
+python3 ferramentas/limpar.py perguntas/QUESTOES_4.csv ingles
+python3 ferramentas/limpar.py perguntas/QUESTOES_5.csv ciencias
+python3 ferramentas/limpar.py perguntas/QUESTOES_6.csv geografia
+python3 ferramentas/limpar.py perguntas/QUESTOES_7.csv portugues
 
 for topico in todas portugues matematica ingles historia geografia ciencias; do
   for tipo in a b c d; do
