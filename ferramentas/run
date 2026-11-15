@@ -2,8 +2,8 @@
 #
 
 BASE_JOGO=/content/Milhao_3
-TOOLS=/content
-WAV2ADPCM=$TOOLS/wav2adpcm
+ROOT=/content
+WAV2ADPCM=$ROOT/wav2adpcm
 
 if [ ! -d show-do-milhao-vol3-dc-publico ]; then
 	git clone https://github.com/Colgaton/show-do-milhao-vol3-dc-publico.git
@@ -41,7 +41,7 @@ for f in *; do
     lower=$(printf '%s' "$f" | tr '[:upper:]' '[:lower:]')
     [ "$f" = "$lower" ] || mv -- "$f" "$lower"
 done
-cd -
+cd $ROOT
 ##
 
 # Converte as placas de fases
@@ -169,7 +169,7 @@ ffmpeg -hide_banner -y -hide_banner -loglevel error -y -i $BASE_JOGO/videos/ence
 # Questoes
 mkdir ocx perguntas
 cp $BASE_JOGO/*movies*.ocx ocx/
-python3 quiz_text_hunt.py ocx --out perguntas
+python3 ferramentas/quiz_text_hunt.py ocx --out perguntas
 python3 ferramentas/limpar.py perguntas/QUESTOES.csv todas
 python3 ferramentas/limpar.py perguntas/QUESTOES_1.csv historia
 python3 ferramentas/limpar.py perguntas/QUESTOES_3.csv matematica
@@ -180,6 +180,6 @@ python3 ferramentas/limpar.py perguntas/QUESTOES_7.csv portugues
 
 for topico in todas portugues matematica ingles historia geografia ciencias; do
   for tipo in a b c d; do
-	./converter ${topico}_${tipo}.txt cd_root/${topico}_${tipo}.dat
+	./converter ${topico}_${tipo}.txt romdisk_boot/${topico}_${tipo}.dat
   done
 done
