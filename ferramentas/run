@@ -12,9 +12,6 @@ if [ -d cd_root ]; then
 	rm -rf cd_root
 fi
 
-mv show-do-milhao-vol3-dc-publico/ferramentas .
-mv show-do-milhao-vol3-dc-publico/run .
-
 mkdir cd_root
 mkdir -p cd_root/{shm,videos,sfx,bg,sng}
 chmod +x ferramentas/converte_imagem.sh
