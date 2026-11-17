@@ -23,6 +23,15 @@ What it does (zero dependencies, Python 3.8+ stdlib only, READ-ONLY):
 Usage:
     python quiz_text_hunt.py "C:\\Games\\QuizGame"
     python quiz_text_hunt.py ./game --out ./hunt --top 15
+    python quiz_text_hunt.py ./game -v        # also print the report on screen
+
+Output: quiet by default -- nothing is printed unless something goes wrong.
+Errors go to stderr. The report is always written to <out>/report.txt;
+use -v / --verbose to also print it on screen.
+
+Exit codes: 0 = OK
+            1 = fatal error (nothing scanned)
+            2 = finished, but some files/tables could not be read or written
 
 Nothing in the target folder is ever modified.
 """
@@ -40,8 +49,9 @@ import subprocess
 import sys
 import tempfile
 
-if hasattr(sys.stdout, "reconfigure"):
-    sys.stdout.reconfigure(errors="replace")
+for _stream in (sys.stdout, sys.stderr):
+    if hasattr(_stream, "reconfigure"):
+        _stream.reconfigure(errors="replace")
 
 # ----------------------------------------------------------------------------
 # Configuration
@@ -197,7 +207,7 @@ def unique_path(outdir: str, base: str, ext: str = ".csv") -> str:
 # Database dumping
 # ----------------------------------------------------------------------------
 
-def dump_sqlite(path: str, outdir: str) -> list[tuple[str, str]]:
+def dump_sqlite(path: str, outdir: str, errors: list[str]) -> list[tuple[str, str]]:
     """Copy the DB (so locks are never an issue), export every table to CSV."""
     made: list[tuple[str, str]] = []
     tmp = tempfile.mkdtemp(prefix="qz_hunt_")
@@ -219,17 +229,17 @@ def dump_sqlite(path: str, outdir: str) -> list[tuple[str, str]]:
                     for r in rows:
                         w.writerow(r)
                 made.append((t, fn))
-            except sqlite3.Error as e:
-                made.append((t, "ERROR: %s" % e))
+            except (sqlite3.Error, OSError) as e:
+                errors.append("%s: table %s: %s" % (path, t, e))
         con.close()
     except (sqlite3.Error, OSError) as e:
-        made.append(("<database>", "ERROR: %s" % e))
+        errors.append("%s: cannot read SQLite database: %s" % (path, e))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     return made
 
 
-def dump_access_mdbtools(path: str, outdir: str) -> list[tuple[str, str]] | None:
+def dump_access_mdbtools(path: str, outdir: str, errors: list[str]) -> list[tuple[str, str]] | None:
     """If mdbtools is installed (Linux/WSL), export Access tables to CSV."""
     if not shutil.which("mdb-tables"):
         return None
@@ -239,15 +249,23 @@ def dump_access_mdbtools(path: str, outdir: str) -> list[tuple[str, str]] | None
         dst = os.path.join(tmp, "copy.mdb")
         shutil.copy2(path, dst)
         p = subprocess.run(["mdb-tables", "-1", dst], capture_output=True, text=True)
+        if p.returncode != 0:
+            errors.append("%s: mdb-tables failed (exit %d): %s"
+                          % (path, p.returncode, " ".join(p.stderr.split()) or "no message"))
         tables = [t.strip() for t in p.stdout.splitlines() if t.strip()]
         for t in tables:
             fn = unique_path(outdir, safe_name(t))
             with open(fn, "w", encoding="utf-8", errors="replace") as f:
-                subprocess.run(["mdb-export", dst, t], stdout=f,
-                               stderr=subprocess.DEVNULL)
+                x = subprocess.run(["mdb-export", dst, t], stdout=f,
+                                   stderr=subprocess.PIPE, text=True)
+            if x.returncode != 0 or x.stderr.strip():
+                # the CSV is kept (it may be partial) but the problem is reported
+                errors.append("%s: mdb-export table %s (exit %d) -- %s may be incomplete: %s"
+                              % (path, t, x.returncode, os.path.basename(fn),
+                                 " ".join(x.stderr.split())[:300] or "no message"))
             made.append((t, fn))
     except Exception as e:  # noqa: BLE001 - best effort
-        made.append(("<database>", "ERROR: %s" % e))
+        errors.append("%s: cannot export Access database: %s" % (path, e))
     finally:
         shutil.rmtree(tmp, ignore_errors=True)
     return made
@@ -264,22 +282,37 @@ def main() -> int:
     ap.add_argument("--min-len", type=int, default=5, help="min string length")
     ap.add_argument("--top", type=int, default=10, help="top lines per file")
     ap.add_argument("--max-mb", type=int, default=64, help="skip files larger than this (MB)")
+    ap.add_argument("-v", "--verbose", action="store_true",
+                    help="print the report on screen (default: quiet, only errors)")
     args = ap.parse_args()
+
+    errors: list[str] = []
+
+    def err(msg: str) -> None:
+        """Errors always go to stderr, even in quiet mode."""
+        errors.append(msg)
+        print("error: %s" % msg, file=sys.stderr)
 
     root = os.path.abspath(args.root)
     if not os.path.isdir(root):
-        print("Not a folder: %s" % root)
+        err("not a folder: %s" % root)
         return 1
 
     outdir = os.path.abspath(args.out)
     strdir = os.path.join(outdir, "strings")
-    os.makedirs(strdir, exist_ok=True)
+    try:
+        os.makedirs(strdir, exist_ok=True)
+    except OSError as e:
+        err("cannot create output folder %s: %s" % (strdir, e))
+        return 1
 
     report_lines: list[str] = []
 
     def say(line: str = "") -> None:
-        print(line)
+        """Report line: always saved to report.txt, printed only with -v."""
         report_lines.append(line)
+        if args.verbose:
+            print(line)
 
     say("=== Quiz text hunt ===")
     say("Root: %s" % root)
@@ -294,7 +327,8 @@ def main() -> int:
             p = os.path.join(dirpath, name)
             try:
                 size = os.path.getsize(p)
-            except OSError:
+            except OSError as e:
+                err("cannot read %s: %s" % (p, e))
                 continue
             ext = os.path.splitext(name)[1].lower()
             if ext in MEDIA_EXT:
@@ -320,6 +354,7 @@ def main() -> int:
                     rec["strings8"], rec["strings16"] = extract_strings(data, args.min_len)
                 except OSError as e:
                     rec["error"] = str(e)
+                    err("cannot read %s: %s" % (p, e))
             else:
                 rec["error"] = "skipped for strings: > %d MB" % args.max_mb
             records.append(rec)
@@ -367,49 +402,59 @@ def main() -> int:
 
     # ---- ranked candidates --------------------------------------------------
     say()
-    # say("--- Ranked candidates (question-likelihood) ---")
-    # for i, rec in enumerate(scored[:25], 1):
-    #     rel = os.path.relpath(rec["path"], root)
-    #     say("[%2d] %s  (%.2f MB)" % (i, rel, rec["size"] / 1048576))
-    #     if rec["kind"]:
-    #         say("     kind    : %s" % rec["kind"])
-    #     say("     strings : %d (8-bit %d / UTF-16 %d)"
-    #         % (rec["n_strings"], len(rec["strings8"]), len(rec["strings16"])))
-    #     if rec["error"]:
-    #         say("     note    : %s" % rec["error"])
-    #     for sc, s in rec["top"]:
-    #         say("     %3d | %s" % (sc, s[:160]))
-    #     for h in rec["hints"][:5]:
-    #         say("     hint    : %s" % h[:220])
-    #     say()
+    say("--- Ranked candidates (question-likelihood) ---")
+    for i, rec in enumerate(scored[:25], 1):
+        rel = os.path.relpath(rec["path"], root)
+        say("[%2d] %s  (%.2f MB)" % (i, rel, rec["size"] / 1048576))
+        if rec["kind"]:
+            say("     kind    : %s" % rec["kind"])
+        say("     strings : %d (8-bit %d / UTF-16 %d)"
+            % (rec["n_strings"], len(rec["strings8"]), len(rec["strings16"])))
+        if rec["error"]:
+            say("     note    : %s" % rec["error"])
+        for sc, s in rec["top"]:
+            say("     %3d | %s" % (sc, s[:160]))
+        for h in rec["hints"][:5]:
+            say("     hint    : %s" % h[:220])
+        say()
 
     # ---- database handling --------------------------------------------------
-    #sqlite_dumps = []
-    #access_found = []
-    #say("--- Database findings ---")
-    #for rec in scored:
-    #    kind = rec["kind"] or ""
-    #    if "SQLite database" in kind:
-    #        say("* SQLite DB: %s -> dumping tables to CSV" % rec["path"])
-    #        made = dump_sqlite(rec["path"], outdir)
-    #        sqlite_dumps.append((rec["path"], made))
-    #        for t, fn in made:
-    #            say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
-    #    elif "Access" in kind and "lock" not in kind:
-    #        access_found.append(rec["path"])
-    #        made = dump_access_mdbtools(rec["path"], outdir)
-    #        if made is None:
-    #            say("* Access DB: %s" % rec["path"])
-    #            say("    mdbtools not found. On Linux/WSL:  sudo apt install mdbtools")
-    #            say("    then:  mdb-tables -1 \"%s\"   and   mdb-export \"%s\" <TABLE> > table.csv"
-    #                % (rec["path"], rec["path"]))
-    #            say("    On Windows: MDB Viewer Plus, or Access PassView if it is password-protected.")
-    #        else:
-    #            say("* Access DB: %s -> dumping tables to CSV" % rec["path"])
-    #            for t, fn in made:
-    #                say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
-    #if not sqlite_dumps and not access_found:
-    #    say("(no readable Access/SQLite database identified by signature)")
+    sqlite_dumps = []
+    access_found = []
+    say("--- Database findings ---")
+    no_mdbtools = []
+    for rec in scored:
+        kind = rec["kind"] or ""
+        db_errors: list[str] = []
+        if "SQLite database" in kind:
+            say("* SQLite DB: %s -> dumping tables to CSV" % rec["path"])
+            made = dump_sqlite(rec["path"], outdir, db_errors)
+            sqlite_dumps.append((rec["path"], made))
+            for t, fn in made:
+                say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
+        elif "Access" in kind and "lock" not in kind:
+            access_found.append(rec["path"])
+            made = dump_access_mdbtools(rec["path"], outdir, db_errors)
+            if made is None:
+                no_mdbtools.append(rec["path"])
+                say("* Access DB: %s" % rec["path"])
+                say("    mdbtools not found. On Linux/WSL:  sudo apt install mdbtools")
+                say("    then:  mdb-tables -1 \"%s\"   and   mdb-export \"%s\" <TABLE> > table.csv"
+                    % (rec["path"], rec["path"]))
+                say("    On Windows: MDB Viewer Plus, or Access PassView if it is password-protected.")
+            else:
+                say("* Access DB: %s -> dumping tables to CSV" % rec["path"])
+                for t, fn in made:
+                    say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
+        for e in db_errors:
+            say("    ERROR: %s" % e)
+            err(e)
+    if no_mdbtools:
+        err("%d Access database(s) found but NOT exported: mdbtools is not installed "
+            "(macOS: brew install mdbtools / Linux: sudo apt install mdbtools). "
+            "Run with -v for the list." % len(no_mdbtools))
+    if not sqlite_dumps and not access_found:
+        say("(no readable Access/SQLite database identified by signature)")
 
     # ---- write outputs ------------------------------------------------------
     wrote = 0
@@ -425,29 +470,40 @@ def main() -> int:
                 f.write("\n\n## 8-bit strings\n")
                 f.write("\n".join(rec["strings8"]))
             wrote += 1
-        except OSError:
-            pass
+        except OSError as e:
+            err("cannot write %s: %s" % (fn, e))
 
     rep = os.path.join(outdir, "report.txt")
-    with open(rep, "w", encoding="utf-8", errors="replace") as f:
-        f.write("\n".join(report_lines))
-
-    #say()
-    #say("--- Output ---")
-    #say("report : %s" % rep)
-    #say("strings: %s  (%d files)" % (strdir, wrote))
+    if errors:
+        say()
+        say("--- Errors (%d) ---" % len(errors))
+        for e in errors:
+            say("  " + e)
 
     say()
-    #say("--- Next steps ---")
-    #say("1. Access DB found? Export tables (see above) and look for Question/Quiz tables.")
-    #say("2. .exe/.ocx with question hits? It embeds text (VB6=UTF-16, Delphi=UTF-16,")
-    #say("   .NET=use ILSpy/dnSpy). Resource Hacker can dump embedded resources.")
-    #say("3. Nothing obvious? Run the game and use Process Monitor (ProcMon): filter")
-    #say("   Path contains <game folder> and Operation is ReadFile, then click through a")
-    #say("   question -- the file(s) read at that moment hold the data.")
-    #say("4. Password-protected Access DB? The password is often recoverable from the")
-    #say("   .exe strings (see 'hint:' lines above) or with NirSoft Access PassView.")
-    return 0
+    say("--- Output ---")
+    say("report : %s" % rep)
+    say("strings: %s  (%d files)" % (strdir, wrote))
+
+    say()
+    say("--- Next steps ---")
+    say("1. Access DB found? Export tables (see above) and look for Question/Quiz tables.")
+    say("2. .exe/.ocx with question hits? It embeds text (VB6=UTF-16, Delphi=UTF-16,")
+    say("   .NET=use ILSpy/dnSpy). Resource Hacker can dump embedded resources.")
+    say("3. Nothing obvious? Run the game and use Process Monitor (ProcMon): filter")
+    say("   Path contains <game folder> and Operation is ReadFile, then click through a")
+    say("   question -- the file(s) read at that moment hold the data.")
+    say("4. Password-protected Access DB? The password is often recoverable from the")
+    say("   .exe strings (see 'hint:' lines above) or with NirSoft Access PassView.")
+
+    # report written last, so it contains every section (and the error list)
+    try:
+        with open(rep, "w", encoding="utf-8", errors="replace") as f:
+            f.write("\n".join(report_lines) + "\n")
+    except OSError as e:
+        err("cannot write report %s: %s" % (rep, e))
+        return 2
+    return 2 if errors else 0
 
 
 if __name__ == "__main__":
