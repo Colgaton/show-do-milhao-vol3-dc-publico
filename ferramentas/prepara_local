@@ -1,0 +1,20 @@
+#!/bin/bash
+
+if [ ! -e wav2adpcm ]; then
+wget https://raw.githubusercontent.com/KallistiOS/KallistiOS/refs/heads/master/utils/wav2adpcm/wav2adpcm.c
+gcc wav2adpcm.c -o wav2adpcm
+fi
+
+sudo apt-get update && sudo apt-get install imagemagick ffmpeg opus-tools mdbtools meson libisofs-dev genisoimage pkg-config -y
+if [ ! -d mkdcdisc ]; then
+git clone -q https://gitlab.com/simulant/mkdcdisc.git
+(cd mkdcdisc && meson setup build && meson compile -C build && sudo meson install -C build)
+fi
+
+gcc show-do-milhao-vol3-dc-publico/ferramentas/converter.c -o converter
+
+cp -R show-do-milhao-vol3-dc-publico/ferramentas .
+cp -R show-do-milhao-vol3-dc-publico/cd_root .
+
+#mkdcdisc --allow-overwrite -e main.elf -D cd_root/ -p ferramentas/IP.BIN -o milhao.cdi
+

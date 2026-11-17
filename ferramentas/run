@@ -1,15 +1,12 @@
 #!/bin/bash
 #
 
-BASE_JOGO=/content/Milhao_3
-ROOT=/content
+ROOT=$(pwd)
+BASE_JOGO=$ROOT/Milhao_3
 WAV2ADPCM=$ROOT/wav2adpcm
 
 if [ ! -d show-do-milhao-vol3-dc-publico ]; then
 	git clone https://github.com/Colgaton/show-do-milhao-vol3-dc-publico.git
-fi
-if [ -d $ROOT/cd_root ]; then
-	rm -rf $ROOT/cd_root
 fi
 
 mkdir -p cd_root/{bg,perguntas,sfx,sng,videos}
@@ -74,7 +71,7 @@ ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda4.jpg $ROOT/cd_root/shm/spr_a
 ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda5.jpg $ROOT/cd_root/shm/spr_ajuda5.png 64x64!
 # Converte fundo e coloca letras para tela de digitar nome
 ferramentas/converte_imagem.sh $BASE_JOGO/img/fundo_pl.jpg /tmp/fundo_pl.jpg 512x512!
-convert /tmp/fundo_pl.jpg $ROOT/cd_root/shm/letras.jpg -geometry +117x177 -composite $ROOT/cd_root/bg/bg_digite_nome4.jpg
+convert /tmp/fundo_pl.jpg $ROOT/cd_root/shm/letras.jpg -geometry +117+177 -composite $ROOT/cd_root/bg/bg_digite_nome4.jpg
 
 # Converte ouroX.jpg, mas esse e'um hack: cola ele na image de fundo, converte para a resolucao certa, entao recorta e salva
 for ouro in {1..16}; do
@@ -116,33 +113,33 @@ ferramentas/converte_imagem.sh $BASE_JOGO/img/tl_valor.jpg $ROOT/cd_root/bg/bg_t
 ls $BASE_JOGO/img/p[0-9]*.jpg | while read file; do ferramentas/converte_imagem.sh $file $ROOT/cd_root/bg/bg_$(basename $file) 512x512! ; done
 
 # Sons
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/correta.wav -ac 1 -c:a pcm_s16le /tmp/correta.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/correta.wav -ac 1 -c:a pcm_s16le /tmp/correta.wav
 $WAV2ADPCM -t /tmp/correta.wav $ROOT/cd_root/sfx/sfx_correta.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/certeza1.wav -ac 1 -c:a pcm_s16le /tmp/certeza1.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/certeza1.wav -ac 1 -c:a pcm_s16le /tmp/certeza1.wav
 $WAV2ADPCM -t /tmp/certeza1.wav $ROOT/cd_root/sfx/sfx_certeza1.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/certeza2.wav -ac 1 -c:a pcm_s16le /tmp/certeza2.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/certeza2.wav -ac 1 -c:a pcm_s16le /tmp/certeza2.wav
 $WAV2ADPCM -t /tmp/certeza2.wav $ROOT/cd_root/sfx/sfx_certeza2.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/certeza3.wav -ac 1 -c:a pcm_s16le /tmp/certeza3.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/certeza3.wav -ac 1 -c:a pcm_s16le /tmp/certeza3.wav
 $WAV2ADPCM -t /tmp/certeza3.wav $ROOT/cd_root/sfx/sfx_certeza3.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/clique2.wav -ac 1 -c:a pcm_s16le /tmp/clique2.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/clique2.wav -ac 1 -c:a pcm_s16le /tmp/clique2.wav
 $WAV2ADPCM -t /tmp/clique2.wav $ROOT/cd_root/sfx/sfx_clique2.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/nome.wav -ac 1 -c:a pcm_s16le /tmp/nome.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/nome.wav -ac 1 -c:a pcm_s16le /tmp/nome.wav
 $WAV2ADPCM -t /tmp/nome.wav $ROOT/cd_root/sfx/sfx_nome.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/entendeu.wav -ac 1 -c:a pcm_s16le /tmp/entendeu.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/entendeu.wav -ac 1 -c:a pcm_s16le /tmp/entendeu.wav
 $WAV2ADPCM -t /tmp/entendeu.wav $ROOT/cd_root/sfx/sfx_entendeu.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/quale.wav -ac 1 -c:a pcm_s16le /tmp/quale.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/quale.wav -ac 1 -c:a pcm_s16le /tmp/quale.wav
 $WAV2ADPCM -t /tmp/quale.wav $ROOT/cd_root/sfx/sfx_quale.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/errada.wav -ac 1 -c:a pcm_s16le /tmp/errada.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/errada.wav -ac 1 -c:a pcm_s16le /tmp/errada.wav
 $WAV2ADPCM -t /tmp/errada.wav $ROOT/cd_root/sfx/sfx_errada.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/tempo.wav -ac 1 -c:a pcm_s16le /tmp/tempo.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/tempo.wav -ac 1 -c:a pcm_s16le /tmp/tempo.wav
 $WAV2ADPCM -t /tmp/tempo.wav $ROOT/cd_root/sfx/sfx_tempo.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/sons/valor.wav -ac 1 -c:a pcm_s16le /tmp/valor.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/sons/valor.wav -ac 1 -c:a pcm_s16le /tmp/valor.wav
 $WAV2ADPCM -t /tmp/valor.wav $ROOT/cd_root/sfx/sfx_valor.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/ouro.wav -ac 1 -c:a pcm_s16le /tmp/ouro.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/ouro.wav -ac 1 -c:a pcm_s16le /tmp/ouro.wav
 $WAV2ADPCM -t /tmp/ouro.wav $ROOT/cd_root/sfx/sfx_ouro.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/ajuda1.wav -ac 1 -c:a pcm_s16le /tmp/ajuda1.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/ajuda1.wav -ac 1 -c:a pcm_s16le /tmp/ajuda1.wav
 $WAV2ADPCM -t /tmp/ajuda1.wav $ROOT/cd_root/sfx/sfx_ajuda1.wav
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/boasorte.wav -ac 1 -c:a pcm_s16le /tmp/boasorte.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/boasorte.wav -ac 1 -c:a pcm_s16le /tmp/boasorte.wav
 $WAV2ADPCM -t /tmp/boasorte.wav $ROOT/cd_root/sfx/sfx_boasorte.wav
 
 # Audios antes de cada fase
@@ -150,26 +147,26 @@ for wav in `ls $BASE_JOGO/audios/[1-9]*.wav`; do opus=$(basename $wav | sed s/\.
 # outros audios
 for wav in entregar.wav susp1.wav susp2.wav susp3.wav susp4.wav susp5.wav susp6.wav; do opus=$(basename $wav | sed s/\.wav/\.opus/g);  opusenc --bitrate 48 $BASE_JOGO/audios/$wav $ROOT/cd_root/sng/sng_$opus; done
 # Aumenta o volume do tema antes de converter
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/tema.wav -af "loudnorm=I=-17.5:TP=-1:LRA=7" /tmp/tema.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/tema.wav -af "loudnorm=I=-17.5:TP=-1:LRA=7" /tmp/tema.wav
 opusenc --bitrate 48 /tmp/tema.wav $ROOT/cd_root/sng/sng_tema.opus
 
 # Convidados devem ser dividos em 2
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/convida.wav -ac 1 -c:a pcm_s16le /tmp/temp0.wav
-ffmpeg -hide_banner -y -i /tmp/temp0.wav -t 2.5 /tmp/temp1.wav
-ffmpeg -hide_banner -y -i /tmp/temp0.wav -ss 2.7 /tmp/temp2.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/convida.wav -ac 1 -c:a pcm_s16le /tmp/temp0.wav
+ffmpeg -loglevel quiet -hide_banner -y -i /tmp/temp0.wav -t 2.5 /tmp/temp1.wav
+ffmpeg -loglevel quiet -hide_banner -y -i /tmp/temp0.wav -ss 2.7 /tmp/temp2.wav
 $WAV2ADPCM -t /tmp/temp1.wav $ROOT/cd_root/sfx/sfx_convida.wav
 $WAV2ADPCM -t /tmp/temp2.wav $ROOT/cd_root/sfx/sfx_conversa.wav
 rm -f /tmp/temp*.wav
 # Colegas deve ser cortado
-ffmpeg -hide_banner -y -i $BASE_JOGO/audios/colegas.wav -ac 1 -c:a pcm_s16le /tmp/temp1.wav
-ffmpeg -hide_banner -y -i /tmp/temp1.wav -t 2.8 /tmp/temp2.wav
+ffmpeg -loglevel quiet -hide_banner -y -i $BASE_JOGO/audios/colegas.wav -ac 1 -c:a pcm_s16le /tmp/temp1.wav
+ffmpeg -loglevel quiet -hide_banner -y -i /tmp/temp1.wav -t 2.8 /tmp/temp2.wav
 $WAV2ADPCM -t /tmp/temp2.wav $ROOT/cd_root/sfx/sfx_colegas.wav
 rm -f /tmp/temp*.wav
 
 # Videos
 # Com padding
-ffmpeg -hide_banner -y -hide_banner -loglevel error -y -i $BASE_JOGO/videos/abertura.avi -vf "hqdn3d=1.0:1.0:3:3,scale=160:120:flags=lanczos,unsharp=5:5:0.4:3:3:0.15,pad=320:240:80:60:black,fps=20" -b:v 742k -minrate 742k -maxrate 742k -bufsize 742k -ac 1 -ar 32000 -c:a mp2 -b:a 64k -f mpeg $ROOT/cd_root/videos/abertura.mpg
-ffmpeg -hide_banner -y -hide_banner -loglevel error -y -i $BASE_JOGO/videos/encerra.avi -vf "hqdn3d=1.0:1.0:3:3,scale=160:120:flags=lanczos,unsharp=5:5:0.4:3:3:0.15,pad=320:240:80:60:black,fps=20" -b:v 742k -minrate 742k -maxrate 742k -bufsize 742k -ac 1 -ar 32000 -c:a mp2 -b:a 64k -f mpeg $ROOT/cd_root/videos/encerra.mpg
+ffmpeg -loglevel quiet -hide_banner -y -hide_banner -loglevel quiet -y -i $BASE_JOGO/videos/abertura.avi -vf "hqdn3d=1.0:1.0:3:3,scale=160:120:flags=lanczos,unsharp=5:5:0.4:3:3:0.15,pad=320:240:80:60:black,fps=20" -b:v 742k -minrate 742k -maxrate 742k -bufsize 742k -ac 1 -ar 32000 -c:a mp2 -b:a 64k -f mpeg $ROOT/cd_root/videos/abertura.mpg
+ffmpeg -loglevel quiet -hide_banner -y -hide_banner -loglevel quiet -y -i $BASE_JOGO/videos/encerra.avi -vf "hqdn3d=1.0:1.0:3:3,scale=160:120:flags=lanczos,unsharp=5:5:0.4:3:3:0.15,pad=320:240:80:60:black,fps=20" -b:v 742k -minrate 742k -maxrate 742k -bufsize 742k -ac 1 -ar 32000 -c:a mp2 -b:a 64k -f mpeg $ROOT/cd_root/videos/encerra.mpg
 
 # Questoes
 mkdir ocx perguntas
