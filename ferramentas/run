@@ -12,6 +12,7 @@ if [ -d $ROOT/cd_root ]; then
 	rm -rf $ROOT/cd_root
 fi
 
+mkdir -p cd_root/{bg,perguntas,sfx,sng,videos}
 chmod +x ferramentas/converte_imagem.sh
 
 if [ ! -f showdomilhaovol3.zip ]; then
