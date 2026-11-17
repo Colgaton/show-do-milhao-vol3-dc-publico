@@ -75,7 +75,7 @@ ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda4.jpg cd_root/shm/spr_ajuda4.
 ferramentas/converte_imagem.sh $BASE_JOGO/img/ajuda5.jpg cd_root/shm/spr_ajuda5.png 64x64!
 # Converte fundo e coloca letras para tela de digitar nome
 ferramentas/converte_imagem.sh $BASE_JOGO/img/fundo_pl.jpg /tmp/fundo_pl.jpg 512x512!
-convert /tmp/fundo_pl.jpg extras/letras.jpg -geometry +117x177 -composite cd_root/bg/bg_digite_nome4.jpg
+convert /tmp/fundo_pl.jpg cd_root/shm/letras.jpg -geometry +117x177 -composite cd_root/bg/bg_digite_nome4.jpg
 
 # Converte ouroX.jpg, mas esse e'um hack: cola ele na image de fundo, converte para a resolucao certa, entao recorta e salva
 for ouro in {1..16}; do
