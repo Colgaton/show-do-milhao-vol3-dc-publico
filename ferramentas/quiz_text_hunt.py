@@ -367,49 +367,49 @@ def main() -> int:
 
     # ---- ranked candidates --------------------------------------------------
     say()
-    say("--- Ranked candidates (question-likelihood) ---")
-    for i, rec in enumerate(scored[:25], 1):
-        rel = os.path.relpath(rec["path"], root)
-        say("[%2d] %s  (%.2f MB)" % (i, rel, rec["size"] / 1048576))
-        if rec["kind"]:
-            say("     kind    : %s" % rec["kind"])
-        say("     strings : %d (8-bit %d / UTF-16 %d)"
-            % (rec["n_strings"], len(rec["strings8"]), len(rec["strings16"])))
-        if rec["error"]:
-            say("     note    : %s" % rec["error"])
-        for sc, s in rec["top"]:
-            say("     %3d | %s" % (sc, s[:160]))
-        for h in rec["hints"][:5]:
-            say("     hint    : %s" % h[:220])
-        say()
+    # say("--- Ranked candidates (question-likelihood) ---")
+    # for i, rec in enumerate(scored[:25], 1):
+    #     rel = os.path.relpath(rec["path"], root)
+    #     say("[%2d] %s  (%.2f MB)" % (i, rel, rec["size"] / 1048576))
+    #     if rec["kind"]:
+    #         say("     kind    : %s" % rec["kind"])
+    #     say("     strings : %d (8-bit %d / UTF-16 %d)"
+    #         % (rec["n_strings"], len(rec["strings8"]), len(rec["strings16"])))
+    #     if rec["error"]:
+    #         say("     note    : %s" % rec["error"])
+    #     for sc, s in rec["top"]:
+    #         say("     %3d | %s" % (sc, s[:160]))
+    #     for h in rec["hints"][:5]:
+    #         say("     hint    : %s" % h[:220])
+    #     say()
 
     # ---- database handling --------------------------------------------------
-    sqlite_dumps = []
-    access_found = []
-    say("--- Database findings ---")
-    for rec in scored:
-        kind = rec["kind"] or ""
-        if "SQLite database" in kind:
-            say("* SQLite DB: %s -> dumping tables to CSV" % rec["path"])
-            made = dump_sqlite(rec["path"], outdir)
-            sqlite_dumps.append((rec["path"], made))
-            for t, fn in made:
-                say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
-        elif "Access" in kind and "lock" not in kind:
-            access_found.append(rec["path"])
-            made = dump_access_mdbtools(rec["path"], outdir)
-            if made is None:
-                say("* Access DB: %s" % rec["path"])
-                say("    mdbtools not found. On Linux/WSL:  sudo apt install mdbtools")
-                say("    then:  mdb-tables -1 \"%s\"   and   mdb-export \"%s\" <TABLE> > table.csv"
-                    % (rec["path"], rec["path"]))
-                say("    On Windows: MDB Viewer Plus, or Access PassView if it is password-protected.")
-            else:
-                say("* Access DB: %s -> dumping tables to CSV" % rec["path"])
-                for t, fn in made:
-                    say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
-    if not sqlite_dumps and not access_found:
-        say("(no readable Access/SQLite database identified by signature)")
+    #sqlite_dumps = []
+    #access_found = []
+    #say("--- Database findings ---")
+    #for rec in scored:
+    #    kind = rec["kind"] or ""
+    #    if "SQLite database" in kind:
+    #        say("* SQLite DB: %s -> dumping tables to CSV" % rec["path"])
+    #        made = dump_sqlite(rec["path"], outdir)
+    #        sqlite_dumps.append((rec["path"], made))
+    #        for t, fn in made:
+    #            say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
+    #    elif "Access" in kind and "lock" not in kind:
+    #        access_found.append(rec["path"])
+    #        made = dump_access_mdbtools(rec["path"], outdir)
+    #        if made is None:
+    #            say("* Access DB: %s" % rec["path"])
+    #            say("    mdbtools not found. On Linux/WSL:  sudo apt install mdbtools")
+    #            say("    then:  mdb-tables -1 \"%s\"   and   mdb-export \"%s\" <TABLE> > table.csv"
+    #                % (rec["path"], rec["path"]))
+    #            say("    On Windows: MDB Viewer Plus, or Access PassView if it is password-protected.")
+    #        else:
+    #            say("* Access DB: %s -> dumping tables to CSV" % rec["path"])
+    #            for t, fn in made:
+    #                say("    table %-30s -> %s" % (t, os.path.relpath(fn, outdir)))
+    #if not sqlite_dumps and not access_found:
+    #    say("(no readable Access/SQLite database identified by signature)")
 
     # ---- write outputs ------------------------------------------------------
     wrote = 0
@@ -432,21 +432,21 @@ def main() -> int:
     with open(rep, "w", encoding="utf-8", errors="replace") as f:
         f.write("\n".join(report_lines))
 
-    say()
-    say("--- Output ---")
-    say("report : %s" % rep)
-    say("strings: %s  (%d files)" % (strdir, wrote))
+    #say()
+    #say("--- Output ---")
+    #say("report : %s" % rep)
+    #say("strings: %s  (%d files)" % (strdir, wrote))
 
     say()
-    say("--- Next steps ---")
-    say("1. Access DB found? Export tables (see above) and look for Question/Quiz tables.")
-    say("2. .exe/.ocx with question hits? It embeds text (VB6=UTF-16, Delphi=UTF-16,")
-    say("   .NET=use ILSpy/dnSpy). Resource Hacker can dump embedded resources.")
-    say("3. Nothing obvious? Run the game and use Process Monitor (ProcMon): filter")
-    say("   Path contains <game folder> and Operation is ReadFile, then click through a")
-    say("   question -- the file(s) read at that moment hold the data.")
-    say("4. Password-protected Access DB? The password is often recoverable from the")
-    say("   .exe strings (see 'hint:' lines above) or with NirSoft Access PassView.")
+    #say("--- Next steps ---")
+    #say("1. Access DB found? Export tables (see above) and look for Question/Quiz tables.")
+    #say("2. .exe/.ocx with question hits? It embeds text (VB6=UTF-16, Delphi=UTF-16,")
+    #say("   .NET=use ILSpy/dnSpy). Resource Hacker can dump embedded resources.")
+    #say("3. Nothing obvious? Run the game and use Process Monitor (ProcMon): filter")
+    #say("   Path contains <game folder> and Operation is ReadFile, then click through a")
+    #say("   question -- the file(s) read at that moment hold the data.")
+    #say("4. Password-protected Access DB? The password is often recoverable from the")
+    #say("   .exe strings (see 'hint:' lines above) or with NirSoft Access PassView.")
     return 0
 
 
