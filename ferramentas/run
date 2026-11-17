@@ -172,7 +172,7 @@ ffmpeg -loglevel quiet -hide_banner -y -hide_banner -loglevel quiet -y -i $BASE_
 mkdir ocx perguntas
 cp $BASE_JOGO/*movies*.ocx ocx/
 python3 ferramentas/quiz_text_hunt.py ocx --out perguntas
-python3 ferramentas/limpar.py perguntas/QUESTOES.csv todas
+python3 ferramentas/limpar.py perguntas/QUESTOES.csv todos
 python3 ferramentas/limpar.py perguntas/QUESTOES_1.csv historia
 python3 ferramentas/limpar.py perguntas/QUESTOES_3.csv matematica
 python3 ferramentas/limpar.py perguntas/QUESTOES_4.csv ingles
@@ -180,7 +180,7 @@ python3 ferramentas/limpar.py perguntas/QUESTOES_5.csv ciencias
 python3 ferramentas/limpar.py perguntas/QUESTOES_6.csv geografia
 python3 ferramentas/limpar.py perguntas/QUESTOES_7.csv portugues
 
-for topico in todas portugues matematica ingles historia geografia ciencias; do
+for topico in todos portugues matematica ingles historia geografia ciencias; do
   for tipo in a b c d; do
 	./converter ${topico}_${tipo}.txt $ROOT/cd_root/perguntas/${topico}_${tipo}.dat
   done
